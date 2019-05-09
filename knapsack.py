@@ -14,24 +14,16 @@ def traditional(v, w, capacity, mode = 0):
     rows = len(v) + 1
     cols = capacity + 1
 
-    # adding dummy values as later on we consider these values as indexed from 1 for convinence
     v = [0] + v[:]
     w = [0] + w[:]
 
-    # row : values , #col : weights
     d = [[0 for i in range(cols)] for j in range(rows)]
 
-    # 0th row and 0th column have value 0
-
-    # values
     for i in range(1, rows):
-        # weights
         for j in range(1, cols):
-            # if this weight exceeds max_weight at that point
             if j - w[i] < 0:
                 d[i][j] = d[i - 1][j]
 
-            # max of -> last ele taken | this ele taken + max of previous values possible
             else:
                 d[i][j] = max(d[i - 1][j], v[i] + d[i - 1][j - w[i]])
 
@@ -39,7 +31,6 @@ def traditional(v, w, capacity, mode = 0):
     i = rows - 1
     j = cols - 1
 
-    # Get the items to be picked
     while i > 0 and j > 0:
         if d[i][j] != d[i - 1][j]:
             subset.append(i)
@@ -65,7 +56,12 @@ def hashsack(i,j): # i = number if items, j = capacity
         F[i][j] = value
     return F[i][j]
 
+def getsize(array):
+    size = 0
+    for elem in array:
+        size+= len(elem)
 
+    return size
 def filerr():
     print("##############################################")
     print("## File not found! Running for p01 fileset! ##")
@@ -96,8 +92,8 @@ def greedheap(v,w,capacity):
     g = []
     for i in range(len(v)):
         g.append([v[i] / w[i], v[i], w[i], i])
-    g = sorted(g)
-    g.reverse()
+    #g = sorted(g)
+    #g.reverse()
     heapq._heapify_max(g)
 
     burden = 0
@@ -236,9 +232,9 @@ def GRAPHTASK1(files):
         start = time.perf_counter_ns()
 
         d = traditional(v, w, cap, 1)
-        mem = sys.getsizeof(d)
+        mem = getsize(d)
         runtime = time.perf_counter_ns() - start
-        a1runtimes.append(runtime)
+        a1runtimes.append(runtime/100000)
         a1mems.append(mem)
         ###############
         # for task 1b #
