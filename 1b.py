@@ -107,8 +107,9 @@ class HashTable:
 			temp = self.table[key]
 			temp.Handle_Collision(i,j)
 
-	def Search(i, j, key):
+	def Search(i, j):
 		#found = False
+		key = HashFunc(i,j)
 		cur = self.table[key]
 		if (cur.getNode(i,j) != None):
 			return cur

@@ -1,14 +1,19 @@
 """CS415 Project 4 - Created By Colin Dutra and Jeff Olson Spring 2019"""
+"""
+#M[i][j] = M[i - 1][j]
+#H.Insert(i-1,j,v[i])
+#M[i][j] = max(M[i - 1][j], v[i] + M[i - 1][j - w[i]])
+"""
 
-#!/usr/bin/python2.7
+#!/usr/bin/env python3
 
 import sys
-import time
+import time as t
 import heapq
 import math
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt;
 DEVELOPMENT_MODE = True
-GRAPH_MODE = True
+GRAPH_MODE = False
 w = [0]
 v = [0]
 F = [0]
@@ -53,10 +58,10 @@ class LinkedList:
 
     def add_node(self, i, j, val):
         self.size+=1
-        new_node = Node()
-        new_node.i = i
-        new_node.j = j
-        new_node.val = val
+        new_node = LLNode(i,j,val)
+        #new_node.i = i
+        #new_node.j = j
+        #new_node.val = val
         if self.size == 1:
             self.head = new_node
             new_node.next = None
@@ -65,12 +70,10 @@ class LinkedList:
             self.cur = new_node
 
 
-    def get_node(self, i, j):
-        found = False
+    def get_node(self, i, j):        
         node = self.cur
-        while (found != True):
-            if (i == node.i and j == node.j):
-                found = True
+        while (node != None):
+            if (i == node.i and j == node.j):                
                 return node
             else:
                 node = node.next
@@ -78,53 +81,71 @@ class LinkedList:
 
 
 class HashEntry:
-    def __init__(self, i, j, key):
+    def __init__(self, i, j, val, key):
         self.ll = LinkedList()
-        ll.add_node(i,j)
+        self.ll.add_node(i,j,val)
         self.key = key
+        self.val = val
         
 
     def getKey():
         return self.key
 
-    def Handle_Collision(i,j):
+    def Handle_Collision(self,i,j,val):
         link = self.ll
-        link.add_node(i,j)
+        link.add_node(i,j,val)
 
-    def getNode(i,j):
+    def getNode(self,i,j):
         link = self.ll
         ret_node = link.get_node(i,j)
         return ret_node
+
+    def printNode(self):
+        print()
+        print("key: ", self.key)
+        print("val: ", self.val)
+        print()
 
 
 class HashTable:
 
     def __init__(self, k):
         self.size = k;
-        self.table = [None] * self.size
+        self.table = []
+        for i in range(k):
+            self.table.append(None)
 
 
 
-    def HashFunc(i, j):
+    def HashFunc(self, i, j):
         return hash_helper(i,j) % self.size
 
-    def Insert(i, j, key):
-        key = HashFunc(i,j)
-        entry = HashEntry(i,j, key)
+    def Insert(self, i, j, val):
+        key = self.HashFunc(i,j)
+        entry = HashEntry(i,j,val,key)
+        entry.printNode()
         
         if (self.table[key] == None):
             self.table[key] = entry
         else:
             temp = self.table[key]
-            temp.Handle_Collision(i,j)
+            temp.Handle_Collision(i,j,val)
 
-    def Search(i, j, key):
+    def Search(self, i, j):
         #found = False
+        key = self.HashFunc(i,j)
+        #print("search key", key)
         cur = self.table[key]
-        if (cur.getNode(i,j) != None):
-            return cur
+        if (cur != None):
+            return cur.getNode(i,j)
         else:
             return None
+
+    def Update(self, i,j, val):
+        key = self.HashFunc(i,j)
+        CurEntry = self.table[key]
+        node = CurEntry.getNode(i,j)
+        node.val = val
 
 
 def traditional(v, w, capacity, mode = 0):
@@ -164,7 +185,8 @@ def traditional(v, w, capacity, mode = 0):
 
 
 def space_efficient(v,w,capacity):
-    global M
+    #global M
+    
     rows = len(v) + 1
     cols = capacity + 1
 
@@ -173,29 +195,38 @@ def space_efficient(v,w,capacity):
     v = [0] + v[:]
     w = [0] + w[:]
 
-    
+    d = [[0 for i in range(cols)] for j in range(rows)]
 
     # row : values , #col : weights
-    # what Ian and thought was a solid size for k
-    sizek = math.sqrt((len(v)*len(w))/2)
-    HTable = HashTable(sizek)
+    # what Ian and thought was a solid size for k also could be a 1/4 of capacity
+    #sizek = math.ceil(math.sqrt((len(v)*len(w))/2))
+    sizek = math.ceil((len(v)*len(w))/2)
+    H = HashTable(int(sizek))
+    print("size: ", sizek)
+
         
     for i in range(1, rows):
         # weights
         for j in range(1, cols):
             # if this weight exceeds max_weight at that point
             if j - w[i] < 0:
-                M[i][j] = M[i - 1][j]
-
-            # max of -> last ele taken | this ele taken + max of previous values possible
+                d[i] = hashsack(i-1,j,v[j], H)
+                
             else:
-                M[i][j] = hashsack(i,j,HTable)
-                #M[i][j] = max(M[i - 1][j], v[i] + M[i - 1][j - w[i]])
+                d[i] = max(hashsack(i-1,j), v[i] + hashsack(i-1, j - w[i]))
+
+
+
+
+
+
 
     subset = []
     i = rows - 1
     j = cols - 1
 
+    '''
+    #get subset
     while i > 0 and j > 0:
         if M[i][j] != M[i - 1][j]:
             subset.append(i)
@@ -205,41 +236,34 @@ def space_efficient(v,w,capacity):
 
         else:
             i = i - 1
+    '''
 
-    return M[rows - 1][cols - 1], sorted(subset)
+    return d[rows - 1], sorted(subset)
 
 
 
-def hashsack(i,j,HTable): # i = number if items, j = capacity
-    global F
+def hashsack(i,j,val, HTable): # i = number if items, j = capacity
+    #global M
     if i == 0:
         return 0
     if j == 0:
         return 0
-    if F[i][j] < 0:
+
+    entry = HTable.Search(i,j)
+    print("i: ", i)
+    print("j: ", j)
+    if entry == None:
+        HTable.Insert(i,j,v[j])
+
+    else:
         if j < w[i]:
-            value = hashsack(i-1,j)
+            value = hashsack(i-1,j,val,HTable)
         else:
             value = max(hashsack(i-1,j), v[i] + hashsack(i-1, j - w[i]))
-        F[i][j] = value
-    return F[i][j]
-
-
-def memory_func(i,j):
-    global M
-    if i == 0:
-        return 0
-    if j == 0:
-        return 0
-    elif M[i][j] < 0: #elif i,j is in the hash table
-        if j < w[i]:
-            val = memory_func(i-1, j)
-        else:
-            val = max(memory_func(i-1, j), v[i] + memory_func(i-1, j-w[i]))
-        M[i][j] = val
-    return M[i][j]
-
-
+        HTable.Update(i,j,value)
+    
+    #node = entry.getNode(i,j)
+    return entry
 
 def getsize(array):
     size = 0
@@ -335,7 +359,7 @@ def generateGlobalArray(cols,rows):
 
 
 
-def readout(name,value,subset,time):
+def readout(name,value,subset,rtime):
     stringset = "{"
     for elem in str(subset):
         if elem == "[" or elem == "]":
@@ -347,7 +371,7 @@ def readout(name,value,subset,time):
     print()
     print(name,"Optimal value:",value)
     print(name,"Optimal subset:",stringset)
-    print(name,"Time Taken:",str(time / (10**5)) + "ms")
+    print(name,"Time Taken:",str(rtime / (10**5)) + "ms")
 
 def GRAPHTASK2(files):
     b1name = "Greedy Approach"
@@ -372,17 +396,17 @@ def GRAPHTASK2(files):
 
 
         #task 2a
-        start = time.perf_counter_ns()
+        start = t.perf_counter()
         b1value, b1subset = greedy(v, w, cap)
-        b1runtime = time.perf_counter_ns() - start
+        b1runtime = t.perf_counter() - start
         b1runtimes.append(b1runtime)
 
 
 
         #task 2b
-        start = time.perf_counter_ns()
+        start = t.perf_counter()
         b2value, b2subset = greedheap(v, w, cap)
-        b2runtime = time.perf_counter_ns() - start
+        b2runtime = t.perf_counter() - start
         b2runtimes.append(b2runtime)
 
 
@@ -415,19 +439,19 @@ def GRAPHTASK1(files):
         cap, v, w = processFiles(cap, wt, val)
 
         # for task 1a
-        start = time.perf_counter_ns()
+        start = t.perf_counter()
 
         d = traditional(v, w, cap, 1)
         mem = getsize(d)
-        runtime = time.perf_counter_ns() - start
+        runtime = t.perf_counter() - start
         a1runtimes.append(runtime/100000)
         a1mems.append(mem)
         ###############
         # for task 1b #
         ###############
-        # start = time.perf_counter_ns()
+        # start = t.perf_counter_ns()
         # value, subset = hashsack(v, w, cap)
-        # runtime = time.perf_counter_ns() - start
+        # runtime = t.perf_counter_ns() - start
         # a2runtimes.append(runtime)
 
 
@@ -478,33 +502,33 @@ def main():
 
         name = "Traditional Dynamic Programming"
 
-        start = time.perf_counter_ns()
+        start = t.perf_counter()
         value,subset = traditional(v,w,cap)
-        runtime = time.perf_counter_ns() - start
+        runtime = t.perf_counter() - start
         readout(name,value,subset,runtime)
 
 
         name2 = "Space-efficient Dynamic Programming"
-        start = time.perf_counter_ns()
+        start = t.perf_counter()
         value,subset = space_efficient(v,w,cap)
-        runtime = time.perf_counter_ns() - start
+        runtime = t.perf_counter() - start
         readout(name2, value, subset, runtime)
 
 
         b1name = "Greedy Approach"
 
-        start = time.perf_counter_ns()
+        start = t.perf_counter()
         b1value,b1subset = greedy(v, w, cap)
-        b1runtime = time.perf_counter_ns() - start
+        b1runtime = t.perf_counter() - start
         readout(b1name, b1value, b1subset, b1runtime)
 
 
 
 
         b2name = "Heap-based Greedy Approach"
-        start = time.perf_counter_ns()
+        start = t.perf_counter()
         b2value, b2subset = greedheap(v, w, cap)
-        b2runtime = time.perf_counter_ns() - start
+        b2runtime = t.perf_counter() - start
         readout(b2name, b2value, b2subset, b2runtime)
 
 
