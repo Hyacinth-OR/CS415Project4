@@ -26,27 +26,30 @@ def hash_helper(i,j):
     W = len(w)
     bn = math.ceil(math.log(n+1, 2))
     bw = math.ceil(math.log(W+1, 2))
-    #print("bnstr: ", bn)
+    
 
     #takes 0b of front of bin()
     bn_str = bin(i)[2:]
     bw_str = bin(j)[2:]
+    
 
     bn_str1 = str(bn_str.zfill(bn))
     bw_str1 = str(bw_str.zfill(bw))
-
+    
     
     r = "0b1" + bn_str1 + bw_str1
     
+    #print("r: ", r)
     return int(r, 2)
 
 
 # data is value of F(i,j)
+# data is value of F(i,j)
 class LLNode:
-    def __init__(self, i, j, val):
-        self.i = i
-        self.j = j
-        self.val = val  
+    def __init__(self):
+        self.i = None
+        self.j = None
+        self.val = None  
         self.next = None
 
 
@@ -58,12 +61,13 @@ class LinkedList:
 
     def add_node(self, i, j, val):
         self.size+=1
-        new_node = LLNode(i,j,val)
-        #new_node.i = i
-        #new_node.j = j
-        #new_node.val = val
+        new_node = LLNode()
+        new_node.i = i
+        new_node.j = j
+        new_node.val = val
         if self.size == 1:
             self.head = new_node
+            self.cur = new_node
             new_node.next = None
         else:
             new_node.next = self.cur
@@ -79,6 +83,12 @@ class LinkedList:
                 node = node.next
         return None
 
+    def printList(self):
+        node = self.head
+        while(node != None):
+            print("i: ", node.i, "j: ", node.j, "val: ", node.val)
+            node = node.next
+
 
 class HashEntry:
     def __init__(self, i, j, val, key):
@@ -93,6 +103,7 @@ class HashEntry:
 
     def Handle_Collision(self,i,j,val):
         link = self.ll
+        #link.printList()
         link.add_node(i,j,val)
 
     def getNode(self,i,j):
@@ -100,10 +111,12 @@ class HashEntry:
         ret_node = link.get_node(i,j)
         return ret_node
 
-    def printNode(self):
+    def printEntry(self):
         print()
+        print("--- ENTRY ---")
         print("key: ", self.key)
         print("val: ", self.val)
+        self.ll.printList()
         print()
 
 
@@ -123,7 +136,7 @@ class HashTable:
     def Insert(self, i, j, val):
         key = self.HashFunc(i,j)
         entry = HashEntry(i,j,val,key)
-        entry.printNode()
+        #entry.printEntry()
         
         if (self.table[key] == None):
             self.table[key] = entry
@@ -144,13 +157,21 @@ class HashTable:
     def Update(self, i,j, val):
         key = self.HashFunc(i,j)
         CurEntry = self.table[key]
-        node = CurEntry.getNode(i,j)
-        node.val = val
+        if CurEntry != None:
+            node = CurEntry.getNode(i,j)
+            #node.val = val
+        else:
+            self.Insert(i,j,val)
+
+    def DumpTable(self):
+        for i in range(self.size):
+            temp = self.table[i]
+            temp.printEntry()
 
 
 def traditional(v, w, capacity, mode = 0):
-    rows = len(v) + 1
-    cols = capacity + 1
+    rows = len(v)
+    cols = capacity
 
     v = [0] + v[:]
     w = [0] + w[:]
@@ -168,6 +189,14 @@ def traditional(v, w, capacity, mode = 0):
     subset = []
     i = rows - 1
     j = cols - 1
+    '''
+    for i in range(1, rows):
+        line = "[ "
+        for j in range(1,cols):
+            line += str(d[i][j]) + " "
+        line += " ]"
+        print(line)
+    '''
 
     while i > 0 and j > 0:
         if d[i][j] != d[i - 1][j]:
@@ -185,47 +214,56 @@ def traditional(v, w, capacity, mode = 0):
 
 
 def space_efficient(v,w,capacity):
-    #global M
+    global M
     
-    rows = len(v) + 1
-    cols = capacity + 1
+    rows = len(v)
+    cols = capacity
 
 
     # adding dummy values as later on we consider these values as indexed from 1 for convinence
     v = [0] + v[:]
     w = [0] + w[:]
 
-    d = [[0 for i in range(cols)] for j in range(rows)]
+    M = [[0 for i in range(cols)] for j in range(rows)]
 
     # row : values , #col : weights
     # what Ian and thought was a solid size for k also could be a 1/4 of capacity
     #sizek = math.ceil(math.sqrt((len(v)*len(w))/2))
     sizek = math.ceil((len(v)*len(w))/2)
     H = HashTable(int(sizek))
-    print("size: ", sizek)
+    #print("size: ", sizek)
+
 
         
     for i in range(1, rows):
         # weights
         for j in range(1, cols):
-            # if this weight exceeds max_weight at that point
+            #d[i][j] = hashsack(i,j,v[i], H)
             if j - w[i] < 0:
-                d[i] = hashsack(i-1,j,v[j], H)
+                M[i][j] = hashsack(i-1, j, H)
+                #print("val: ", d[i][j] )
                 
             else:
-                d[i] = max(hashsack(i-1,j), v[i] + hashsack(i-1, j - w[i]))
+                M[i][j] = max(hashsack(i-1,j, H), v[i]+hashsack(i-1, j - w[i], H))
+                #print("val: ", d[i][j] )
+            
 
+                
 
-
-
-
-
-
+                
     subset = []
     i = rows - 1
     j = cols - 1
 
+    #H.DumpTable()
     '''
+    for i in range(1, rows):
+        line = "[ "
+        for j in range(1,cols):
+            line += str(M[i][j]) + " "
+        line += " ]"
+        print(line)
+        '''
     #get subset
     while i > 0 and j > 0:
         if M[i][j] != M[i - 1][j]:
@@ -236,34 +274,47 @@ def space_efficient(v,w,capacity):
 
         else:
             i = i - 1
-    '''
-
-    return d[rows - 1], sorted(subset)
-
-
-
-def hashsack(i,j,val, HTable): # i = number if items, j = capacity
-    #global M
-    if i == 0:
-        return 0
-    if j == 0:
-        return 0
-
-    entry = HTable.Search(i,j)
-    print("i: ", i)
-    print("j: ", j)
-    if entry == None:
-        HTable.Insert(i,j,v[j])
-
-    else:
-        if j < w[i]:
-            value = hashsack(i-1,j,val,HTable)
-        else:
-            value = max(hashsack(i-1,j), v[i] + hashsack(i-1, j - w[i]))
-        HTable.Update(i,j,value)
     
-    #node = entry.getNode(i,j)
-    return entry
+
+    max_val = 0
+    for i in M[rows - 1]:
+        if i == None:
+            i = 0
+        if i > max_val:
+            max_val = i
+
+    return max_val, sorted(subset)
+
+
+
+def hashsack(i,j, HTable): # i = number if items, j = capacity
+    global M
+    if i == 0 or j == 0:
+        return 0
+    
+    if M[i][j] == 0: # if it doesnt exist in the table      
+        if j < w[i]:
+            temp = HTable.Search(i-1,j)
+            if temp != None:
+                value = temp.val
+            else:
+                value = hashsack(i-1,j,HTable)
+        else:
+            temp1 = HTable.Search(i-1,j)
+            temp2 = HTable.Search(i-1,j - w[i])
+            if (temp1 != None and temp2 != None):
+                value = max(temp1.val, temp2.val)
+            elif(temp1 == None or temp2 == None):
+                value = max(hashsack(i-1,j,HTable), v[i] + hashsack(i-1,j-w[i],HTable))
+
+        
+        HTable.Insert(i,j,value)
+    return M[i][j]
+    
+    
+
+
+
 
 def getsize(array):
     size = 0
@@ -467,9 +518,9 @@ def GRAPHTASK1(files):
 
 
 def main():
-    cap = "p00_c.txt"
-    wt = "p00_w.txt"
-    val = "p00_v.txt"
+    cap = "p01_c.txt"
+    wt = "p01_w.txt"
+    val = "p01_v.txt"
     files =\
     [["p00_c.txt","p00_w.txt","p00_v.txt"], ["p01_c.txt","p01_w.txt","p01_v.txt"],
      ["p02_c.txt", "p02_w.txt", "p02_v.txt"], ["p03_c.txt","p03_w.txt","p03_v.txt"],
