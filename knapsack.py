@@ -1,9 +1,5 @@
 """CS415 Project 4 - Created By Colin Dutra and Jeff Olson Spring 2019"""
-"""
-#M[i][j] = M[i - 1][j]
-#H.Insert(i-1,j,v[i])
-#M[i][j] = max(M[i - 1][j], v[i] + M[i - 1][j - w[i]])
-"""
+
 
 #!/usr/bin/env python3
 
@@ -11,7 +7,7 @@ import sys
 import time as t
 import heapq
 import math
-#import matplotlib.pyplot as plt;
+import matplotlib.pyplot as plt;
 DEVELOPMENT_MODE = True
 GRAPH_MODE = False
 w = [0]
@@ -39,12 +35,11 @@ def hash_helper(i,j):
     
     r = "0b1" + bn_str1 + bw_str1
     
-    #print("r: ", r)
+    
     return int(r, 2)
 
 
-# data is value of F(i,j)
-# data is value of F(i,j)
+
 class LLNode:
     def __init__(self):
         self.i = None
@@ -226,7 +221,6 @@ def space_efficient(v,w,capacity):
 
     M = [[0 for i in range(cols)] for j in range(rows)]
 
-    # row : values , #col : weights
     # what Ian and thought was a solid size for k also could be a 1/4 of capacity
     #sizek = math.ceil(math.sqrt((len(v)*len(w))/2))
     sizek = math.ceil((len(v)*len(w))/2)
@@ -238,14 +232,14 @@ def space_efficient(v,w,capacity):
     for i in range(1, rows):
         # weights
         for j in range(1, cols):
-            #d[i][j] = hashsack(i,j,v[i], H)
+
             if j - w[i] < 0:
                 M[i][j] = hashsack(i-1, j, H)
-                #print("val: ", d[i][j] )
+                
                 
             else:
                 M[i][j] = max(hashsack(i-1,j, H), v[i]+hashsack(i-1, j - w[i], H))
-                #print("val: ", d[i][j] )
+                
             
 
                 
@@ -307,8 +301,8 @@ def hashsack(i,j, HTable): # i = number if items, j = capacity
             elif(temp1 == None or temp2 == None):
                 value = max(hashsack(i-1,j,HTable), v[i] + hashsack(i-1,j-w[i],HTable))
 
-        
         HTable.Insert(i,j,value)
+
     return M[i][j]
     
     
@@ -500,17 +494,17 @@ def GRAPHTASK1(files):
         ###############
         # for task 1b #
         ###############
-        # start = t.perf_counter_ns()
-        # value, subset = hashsack(v, w, cap)
-        # runtime = t.perf_counter_ns() - start
-        # a2runtimes.append(runtime)
+        start = t.perf_counter_ns()
+        value, subset = space_efficient(v, w, cap)
+        runtime = t.perf_counter_ns() - start
+        a2runtimes.append(runtime)
 
 
 
     a1runtimes,a1mems = sorted(a1runtimes), sorted(a1mems)
     print(a1runtimes,a1mems)
     plt.plot(a1mems, a1runtimes, 'r-', label=a1name)
-    #plt.plot(a2mems, a2runtimes, 'g-', label=a2name)
+    plt.plot(a2mems, a2runtimes, 'g-', label=a2name)
 
     plt.legend()
     plt.show()
@@ -518,9 +512,9 @@ def GRAPHTASK1(files):
 
 
 def main():
-    cap = "p01_c.txt"
-    wt = "p01_w.txt"
-    val = "p01_v.txt"
+    cap = "p07_c.txt"
+    wt = "p07_w.txt"
+    val = "p07_v.txt"
     files =\
     [["p00_c.txt","p00_w.txt","p00_v.txt"], ["p01_c.txt","p01_w.txt","p01_v.txt"],
      ["p02_c.txt", "p02_w.txt", "p02_v.txt"], ["p03_c.txt","p03_w.txt","p03_v.txt"],
